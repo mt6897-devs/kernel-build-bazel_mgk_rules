@@ -14,7 +14,7 @@
 
 load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
 
-define_kleaf_workspace(common_kernel_package = "kernel-mainline")
+define_kleaf_workspace(common_kernel_package = "kernel-6.1")
 
 # Optional epilog for analysis testing.
 load("//build/kernel/kleaf:workspace_epilog.bzl", "define_kleaf_workspace_epilog")

@@ -47,6 +47,7 @@ def define_mgk(
 
     string_flag(name = "kernel_version" , build_setting_default = "5.15")
     native.config_setting(name = "kernel_version_5_15"    , flag_values = {":kernel_version": "5.15"})
+    native.config_setting(name = "kernel_version_6_1", flag_values = {":kernel_version": "6.1"})
     native.config_setting(name = "kernel_version_mainline", flag_values = {":kernel_version": "mainline"})
 
     mgk_defconfig = name + "_defconfig"
@@ -90,11 +91,13 @@ def define_mgk(
                 name = "mgk_build_config.{}".format(build),
                 kernel_dir = select({
                     ":kernel_version_5_15"    : "common-5.15",
+                    ":kernel_version_6_1"     : "common-6.1",
                     ":kernel_version_mainline": "common-mainline",
                     "//conditions:default"    : "common",
                 }),
                 device_modules_dir = select({
                     ":kernel_version_5_15"    : "kernel_device_modules-5.15",
+                    ":kernel_version_6_1"     : "kernel_device_modules-6.1",
                     ":kernel_version_mainline": "kernel_device_modules-mainline",
                     "//conditions:default"    : "kernel_device_modules",
                 }),
@@ -113,11 +116,13 @@ def define_mgk(
                 name = "mgk_build_config.{}".format(build),
                 kernel_dir = select({
                     ":kernel_version_5_15"    : "kernel-5.15",
+                    ":kernel_version_6_1"     : "kernel-6.1",
                     ":kernel_version_mainline": "kernel-mainline",
                     "//conditions:default"    : "kernel",
                 }),
                 device_modules_dir = select({
                     ":kernel_version_5_15"    : "kernel_device_modules-5.15",
+                    ":kernel_version_6_1"     : "kernel_device_modules-6.1",
                     ":kernel_version_mainline": "kernel_device_modules-mainline",
                     "//conditions:default"    : "kernel_device_modules",
                 }),
@@ -133,11 +138,13 @@ def define_mgk(
                 name = "build_config.{}".format(build),
                 kernel_dir = select({
                     ":kernel_version_5_15"    : "kernel-5.15",
+                    ":kernel_version_6_1"     : "kernel-6.1",
                     ":kernel_version_mainline": "kernel-mainline",
                     "//conditions:default"    : "kernel",
                 }),
                 device_modules_dir = select({
                     ":kernel_version_5_15"    : "kernel_device_modules-5.15",
+                    ":kernel_version_6_1"     : "kernel_device_modules-6.1",
                     ":kernel_version_mainline": "kernel_device_modules-mainline",
                     "//conditions:default"    : "kernel_device_modules",
                 }),
@@ -154,6 +161,7 @@ def define_mgk(
                 name = "mgk.{}".format(build),
                 srcs = select({
                     ":kernel_version_5_15"    : ["//common-5.15:kernel_aarch64_sources"],
+                    ":kernel_version_6_1"     : ["//common-6.1:kernel_aarch64_sources"],
                     ":kernel_version_mainline": ["//common-mainline:kernel_aarch64_sources"],
                     "//conditions:default"    : ["//common:kernel_aarch64_sources"],
                 }) + [
@@ -166,6 +174,7 @@ def define_mgk(
                 kconfig_ext = "Kconfig.ext",
                 base_kernel = select({
                     ":kernel_version_5_15"    : "//common-5.15:kernel_aarch64_debug",
+                    ":kernel_version_6_1"     : "//common-6.1:kernel_aarch64_debug",
                     ":kernel_version_mainline": "//common-mainline:kernel_aarch64_debug",
                     "//conditions:default"    : None,
                 }),
@@ -175,6 +184,7 @@ def define_mgk(
                 name = "mgk.{}".format(build),
                 srcs = select({
                     ":kernel_version_5_15"    : ["//kernel-5.15:kernel_aarch64_sources"],
+                    ":kernel_version_6_1"     : ["//kernel-6.1:kernel_aarch64_sources"],
                     ":kernel_version_mainline": ["//kernel-mainline:kernel_aarch64_sources"],
                     "//conditions:default"    : ["//kernel:kernel_aarch64_sources"],
                 }) + [
@@ -187,6 +197,7 @@ def define_mgk(
                 kconfig_ext = "Kconfig.ext",
                 base_kernel = select({
                     ":kernel_version_5_15"    : "//kernel-5.15:kernel_aarch64.{}".format(build),
+                    ":kernel_version_6_1"    : "//kernel-6.1:kernel_aarch64.{}".format(build),
                     ":kernel_version_mainline": "//kernel-mainline:kernel_aarch64.{}".format(build),
                     "//conditions:default"    : "//kernel:kernel_aarch64.{}".format(build),
                 }),
@@ -203,6 +214,7 @@ def define_mgk(
                 name = "mgk_dist.{}".format(build),
                 data = select({
                     ":kernel_version_5_15"    : ["//common-5.15:kernel_aarch64_debug"],
+                    ":kernel_version_6_1"     : ["//common-6.1:kernel_aarch64_debug"],
                     ":kernel_version_mainline": ["//common-mainline:kernel_aarch64_debug"],
                     "//conditions:default"    : [],
                 }) + [
@@ -216,6 +228,7 @@ def define_mgk(
                 name = "mgk_dist.{}".format(build),
                 data = select({
                     ":kernel_version_5_15"    : ["//kernel-5.15:kernel_aarch64.{}".format(build)],
+                    ":kernel_version_6_1"     : ["//kernel-6.1:kernel_aarch64.{}".format(build)],
                     ":kernel_version_mainline": ["//kernel-mainline:kernel_aarch64.{}".format(build)],
                     "//conditions:default"    : ["//kernel:kernel_aarch64.{}".format(build)],
                 }) + [
