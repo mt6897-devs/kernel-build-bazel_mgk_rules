@@ -111,7 +111,9 @@ def define_mgk(
         if p in kleaf_switch:
             is_cus = -1
         else:
-            if p.endswith("_cus"):
+            if m.startswith("//vendor/mediatek/kernel_modules/cpufreq_"):
+                is_cus = -1
+            elif p.endswith("_cus"):
                 is_cus = 1
             elif p.endswith("_int"):
                 k = p[:-4]
