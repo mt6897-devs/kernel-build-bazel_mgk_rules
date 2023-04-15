@@ -1,3 +1,4 @@
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load(
     "//build/kernel/kleaf:constants.bzl",
     "DEFAULT_GKI_OUTS",
@@ -15,20 +16,38 @@ load(
     "copy_to_dist_dir",
 )
 
-
 kernel_versions = [
     "6.1",
 ]
 
+def get_real_modules_list(common_modules, platform_modules):
+    real_modules = []
+    for k in common_modules:
+        file_path = paths.dirname(k) + "/*"
+        if native.glob([file_path]):
+            real_modules.append(k)
+
+    mgk_platforms = [paths.dirname(p) for p in native.glob(["*/mgk.enabled"])]
+    for k,v in platform_modules.items():
+        for plat in v.split(" "):
+            if (plat in mgk_platforms) and (k not in real_modules):
+                file_path = paths.dirname(k) + "/*"
+                if native.glob([file_path]):
+                    real_modules.append(k)
+    return real_modules
 
 def define_mgk(
         name,
         kleaf_modules,
         common_modules,
         device_modules,
+        platform_device_modules,
         device_eng_modules,
+        platform_device_eng_modules,
         device_userdebug_modules,
-        device_user_modules):
+        platform_device_userdebug_modules,
+        device_user_modules,
+        platform_device_user_modules):
     mgk_defconfig_overlays = \
         select({"//build/bazel_mgk_rules:entry_level_set": ["entry_level.config"],
                 "//conditions:default": []}) + \
@@ -67,6 +86,7 @@ def define_mgk(
             "Kconfig.ext",
             # FIXME
             "Makefile.ext",
+            "certs/mtk_signing_key.pem",
         ],
     )
     native.filegroup(
@@ -99,6 +119,8 @@ def define_mgk(
                     is_cus = -1
             elif p.startswith("met_drv_secure"):
                 is_cus = -1
+            elif m.startswith("//vendor/mediatek/kernel_modules/mtk_input/"):
+                is_cus = -1
             elif m.startswith("//vendor/mediatek/tests/"):
                 is_cus = -1
         if is_cus == 0:
@@ -108,6 +130,12 @@ def define_mgk(
             kleaf_customer.append(m)
         elif is_cus == -1:
             kleaf_internal.append(m)
+
+    # deal with device modules list
+    real_device_modules = get_real_modules_list(device_modules, platform_device_modules)
+    real_device_eng_modules = get_real_modules_list(device_eng_modules, platform_device_eng_modules)
+    real_device_userdebug_modules = get_real_modules_list(device_userdebug_modules, platform_device_userdebug_modules)
+    real_device_user_modules = get_real_modules_list(device_user_modules, platform_device_user_modules)
 
     for build in ["eng", "userdebug", "user", "ack"]:
         if build == "ack":
@@ -240,7 +268,7 @@ def define_mgk(
                 "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_internal],
             }),
             kernel_build = ":mgk.{}".format(build),
-            abi_definition_xml = "android/abi_gki_aarch64.xml",
+            #abi_definition_xml = "android/abi_gki_aarch64.xml",
             abi_definition_stg = "android/abi_gki_aarch64.stg",
             kmi_symbol_list_add_only = True,
             kmi_enforced = True,
@@ -325,25 +353,25 @@ def define_mgk(
     kernel_module(
         name = "mgk_modules.eng",
         srcs = [":mgk_sources"],
-        outs = device_modules + device_eng_modules,
+        outs = real_device_modules + real_device_eng_modules,
         kernel_build = ":mgk.eng",
     )
     kernel_module(
         name = "mgk_modules.userdebug",
         srcs = [":mgk_sources"],
-        outs = device_modules + device_userdebug_modules,
+        outs = real_device_modules + real_device_userdebug_modules,
         kernel_build = ":mgk.userdebug",
     )
     kernel_module(
         name = "mgk_modules.user",
         srcs = [":mgk_sources"],
-        outs = device_modules + device_user_modules,
+        outs = real_device_modules + real_device_user_modules,
         kernel_build = ":mgk.user",
     )
     kernel_module(
         name = "mgk_modules.ack",
         srcs = [":mgk_sources"],
-        outs = device_modules + device_user_modules,
+        outs = real_device_modules + real_device_user_modules,
         kernel_build = ":mgk.ack",
     )
 
