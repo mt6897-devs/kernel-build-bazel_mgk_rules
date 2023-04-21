@@ -244,7 +244,7 @@ def define_mgk(
                 module_outs = common_modules,
                 build_config = ":mgk_build_config.{}".format(build),
                 kconfig_ext = "Kconfig.ext",
-                strip_modules = True,
+#                strip_modules = True,
                 base_kernel = select({
                     "//build/bazel_mgk_rules:kernel_version_6.1"     : "//kernel-{}:kernel_aarch64.{}".format("6.1", build),
                     "//build/bazel_mgk_rules:kernel_version_mainline": "//kernel-{}:kernel_aarch64.{}".format("mainline", build),
