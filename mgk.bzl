@@ -40,6 +40,9 @@ def define_mgk(
         name,
         kleaf_modules,
         common_modules,
+        common_eng_modules,
+        common_userdebug_modules,
+        common_user_modules,
         device_modules,
         platform_device_modules,
         device_eng_modules,
@@ -241,10 +244,10 @@ def define_mgk(
                 outs = [
                     ".config",
                 ],
-                module_outs = common_modules,
+                module_outs = common_eng_modules if build == "eng" else common_userdebug_modules if build == "userdebug" else common_user_modules,
                 build_config = ":mgk_build_config.{}".format(build),
                 kconfig_ext = "Kconfig.ext",
-#                strip_modules = True,
+                strip_modules = True,
                 base_kernel = select({
                     "//build/bazel_mgk_rules:kernel_version_6.1"     : "//kernel-{}:kernel_aarch64.{}".format("6.1", build),
                     "//build/bazel_mgk_rules:kernel_version_mainline": "//kernel-{}:kernel_aarch64.{}".format("mainline", build),
