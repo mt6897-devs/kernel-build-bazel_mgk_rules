@@ -1,4 +1,5 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load(
     "//build/kernel/kleaf:constants.bzl",
     "DEFAULT_GKI_OUTS",
@@ -227,6 +228,7 @@ def define_mgk(
                     "//build/bazel_mgk_rules:kernel_version_mainline": "//common-{}:kernel_aarch64_debug".format("mainline"),
                     "//conditions:default"                           : None,
                 }),
+                modules_prepare_force_generate_headers = True,
             )
         else:
             kernel_build(
@@ -244,12 +246,14 @@ def define_mgk(
                 module_outs = common_modules,
                 build_config = ":mgk_build_config.{}".format(build),
                 kconfig_ext = "Kconfig.ext",
-#                strip_modules = True,
+                strip_modules = False,
                 base_kernel = select({
                     "//build/bazel_mgk_rules:kernel_version_6.1"     : "//kernel-{}:kernel_aarch64.{}".format("6.1", build),
                     "//build/bazel_mgk_rules:kernel_version_mainline": "//kernel-{}:kernel_aarch64.{}".format("mainline", build),
                     "//conditions:default"                           : "//kernel:kernel_aarch64.{}".format(build),
                 }),
+                module_signing_key = "certs/mtk_signing_key.pem",
+                modules_prepare_force_generate_headers = True,
                 # ABI
                 #kmi_symbol_list = "android/abi_gki_aarch64_mtk",
                 #additional_kmi_symbol_lists = native.glob(
@@ -410,8 +414,10 @@ fi""")
     content = []
     content.append("DEVICE_MODULES_DIR={}".format(ctx.attr.device_modules_dir))
     content.append("KERNEL_DIR={}".format(ctx.attr.kernel_dir))
-    #content.append("DEVICE_MODULES_REL_DIR=$(rel_path {} {})".format(ctx.attr.device_modules_dir, ctx.attr.kernel_dir))
-    content.append("DEVICE_MODULES_REL_DIR=../{}".format(ctx.attr.device_modules_dir))
+    if ctx.attr.config_is_local[BuildSettingInfo].value:
+        content.append("DEVICE_MODULES_REL_DIR=../kernel/${DEVICE_MODULES_DIR}")
+    else:
+        content.append("DEVICE_MODULES_REL_DIR=$(rel_path ${DEVICE_MODULES_DIR} ${KERNEL_DIR})")
     content.append("""
 . ${ROOT_DIR}/${KERNEL_DIR}/build.config.common
 . ${ROOT_DIR}/${KERNEL_DIR}/build.config.gki
@@ -430,8 +436,9 @@ DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
     elif ctx.attr.build_variant == "userdebug":
         defconfig.append("${ROOT_DIR}/" + ctx.attr.device_modules_dir + "/kernel/configs/userdebug.config")
     content.append("DEFCONFIG={}".format(ctx.attr.defconfig))
-    content.append("PRE_DEFCONFIG_CMDS=\"KCONFIG_CONFIG=${ROOT_DIR}/${KERNEL_DIR}/arch/arm64/configs/${DEFCONFIG} ${ROOT_DIR}/${KERNEL_DIR}/scripts/kconfig/merge_config.sh -m -r " + " ".join(defconfig) + "\"")
-    content.append("POST_DEFCONFIG_CMDS=\"rm -f ${ROOT_DIR}/${KERNEL_DIR}/arch/arm64/configs/${DEFCONFIG}\"")
+
+    content.append("PRE_DEFCONFIG_CMDS=\"mkdir -p \\${OUT_DIR}/arch/arm64/configs/ && KCONFIG_CONFIG=\\${OUT_DIR}/arch/arm64/configs/${DEFCONFIG} ${ROOT_DIR}/${KERNEL_DIR}/scripts/kconfig/merge_config.sh -m -r " + " ".join(defconfig) + "\"")
+    content.append("POST_DEFCONFIG_CMDS=\"\"")
     content.append("")
     content.extend(ext_content)
     content.append("")
@@ -463,5 +470,8 @@ mgk_build_config = rule(
         "kleaf_modules": attr.string_list(),
         "build_variant": attr.string(mandatory = True),
         "gki_mixed_build": attr.bool(),
+        "config_is_local": attr.label(
+            default = "//build/kernel/kleaf:config_local",
+        ),
     },
 )
