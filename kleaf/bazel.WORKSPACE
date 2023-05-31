@@ -19,3 +19,9 @@ define_kleaf_workspace(common_kernel_package = "kernel-6.1")
 # Optional epilog for analysis testing.
 load("//build/kernel/kleaf:workspace_epilog.bzl", "define_kleaf_workspace_epilog")
 define_kleaf_workspace_epilog()
+
+new_local_repository(
+    name="mgk_internal",
+    path="../vendor/mediatek",
+    build_file = "//build/bazel_mgk_rules:kleaf/BUILD.internal"
+)

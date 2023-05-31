@@ -433,7 +433,8 @@ DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
     defconfig.append("${ROOT_DIR}/${KERNEL_DIR}/arch/arm64/configs/gki_defconfig")
     defconfig.append("${ROOT_DIR}/" + ctx.attr.device_modules_dir + "/arch/arm64/configs/${DEFCONFIG}")
     if ctx.attr.defconfig_overlays:
-        defconfig.extend(ctx.attr.defconfig_overlays)
+        for overlay in ctx.attr.defconfig_overlays:
+            defconfig.append("${ROOT_DIR}/" + ctx.attr.device_modules_dir + "/kernel/configs/" + overlay)
     if ctx.attr.build_variant == "eng":
         defconfig.append("${ROOT_DIR}/" + ctx.attr.device_modules_dir + "/kernel/configs/eng.config")
     elif ctx.attr.build_variant == "userdebug":
@@ -452,6 +453,10 @@ DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
     else:
         content.append("MAKE_GOALS=\"${MAKE_GOALS} Image.lz4 Image.gz\"")
         content.append("FILES=\"${FILES} arch/arm64/boot/Image.lz4 arch/arm64/boot/Image.gz\"")
+
+    content.append("")
+    if ctx.attr.mgk_internal[BuildSettingInfo].value:
+        content.append("MGK_INTERNAL=true")
 
     build_config_file = ctx.actions.declare_file("{}/build.config".format(ctx.attr.name))
     ctx.actions.write(
@@ -475,6 +480,9 @@ mgk_build_config = rule(
         "gki_mixed_build": attr.bool(),
         "config_is_local": attr.label(
             default = "//build/kernel/kleaf:config_local",
+        ),
+        "mgk_internal": attr.label(
+            default = "@mgk_internal//:mgk_internal",
         ),
     },
 )
