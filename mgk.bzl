@@ -37,9 +37,54 @@ def get_real_modules_list(common_modules, platform_modules):
                     real_modules.append(k)
     return real_modules
 
+def get_kleaf_modules_list(kleaf_modules):
+    kleaf_switch = {}
+    for m in kleaf_modules:
+        p = m.partition(":")[2]
+        if p.endswith("_cus"):
+            k = p[:-4]
+            kleaf_switch[k] = m
+    kleaf_internal = []
+    kleaf_customer = []
+    kleaf_msync2_customer = 0
+    for m in kleaf_modules:
+        p = m.partition(":")[2]
+        is_cus = 0
+        if p in kleaf_switch:
+            is_cus = -1
+        else:
+            if m.startswith("//vendor/mediatek/kernel_modules/msync2_frd_cus"):
+                kleaf_msync2_customer = 1
+                continue
+            elif m.startswith("//vendor/mediatek/kernel_modules/cpufreq_"):
+                is_cus = -1
+            elif p.endswith("_cus"):
+                is_cus = 1
+            elif p.endswith("_int"):
+                k = p[:-4]
+                if k in kleaf_switch:
+                    is_cus = -1
+            elif p.startswith("met_drv_secure"):
+                is_cus = -1
+            elif m.startswith("//vendor/mediatek/kernel_modules/mtk_input/"):
+                is_cus = -1
+            elif m.startswith("//vendor/mediatek/tests/"):
+                is_cus = -1
+        if is_cus == 0:
+            kleaf_internal.append(m)
+            kleaf_customer.append(m)
+        elif is_cus == 1:
+            kleaf_customer.append(m)
+        elif is_cus == -1:
+            kleaf_internal.append(m)
+    return kleaf_internal, kleaf_customer, kleaf_msync2_customer
+
 def define_mgk(
         name,
         kleaf_modules,
+        kleaf_eng_modules,
+        kleaf_userdebug_modules,
+        kleaf_user_modules,
         common_modules,
         common_eng_modules,
         common_userdebug_modules,
@@ -101,45 +146,11 @@ def define_mgk(
         ]),
     )
 
-    kleaf_switch = {}
-    for m in kleaf_modules:
-        p = m.partition(":")[2]
-        if p.endswith("_cus"):
-            k = p[:-4]
-            kleaf_switch[k] = m
-    kleaf_internal = []
-    kleaf_customer = []
-    kleaf_msync2_customer = 0
-    for m in kleaf_modules:
-        p = m.partition(":")[2]
-        is_cus = 0
-        if p in kleaf_switch:
-            is_cus = -1
-        else:
-            if m.startswith("//vendor/mediatek/kernel_modules/msync2_frd_cus"):
-                kleaf_msync2_customer = 1
-                continue
-            elif m.startswith("//vendor/mediatek/kernel_modules/cpufreq_"):
-                is_cus = -1
-            elif p.endswith("_cus"):
-                is_cus = 1
-            elif p.endswith("_int"):
-                k = p[:-4]
-                if k in kleaf_switch:
-                    is_cus = -1
-            elif p.startswith("met_drv_secure"):
-                is_cus = -1
-            elif m.startswith("//vendor/mediatek/kernel_modules/mtk_input/"):
-                is_cus = -1
-            elif m.startswith("//vendor/mediatek/tests/"):
-                is_cus = -1
-        if is_cus == 0:
-            kleaf_internal.append(m)
-            kleaf_customer.append(m)
-        elif is_cus == 1:
-            kleaf_customer.append(m)
-        elif is_cus == -1:
-            kleaf_internal.append(m)
+    # get kleaf modules for internal and customer
+    kleaf_internal, kleaf_customer, kleaf_msync2_customer = get_kleaf_modules_list(kleaf_modules)
+    kleaf_eng_internal, kleaf_eng_customer, kleaf_eng_msync2_customer = get_kleaf_modules_list(kleaf_eng_modules)
+    kleaf_userdebug_internal, kleaf_userdebug_customer, kleaf_userdebug_msync2_customer = get_kleaf_modules_list(kleaf_userdebug_modules)
+    kleaf_user_internal, kleaf_user_customer, kleaf_user_msync2_customer = get_kleaf_modules_list(kleaf_user_modules)
 
     # deal with device modules list
     real_device_modules = get_real_modules_list(device_modules, platform_device_modules)
@@ -295,7 +306,21 @@ def define_mgk(
                 "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_internal],
                 "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_internal],
                 "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_internal],
-            }),
+            }) + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_eng_internal],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_eng_internal],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_eng_internal],
+            }) if build == "eng" else [])
+              + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_userdebug_internal],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_userdebug_internal],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_userdebug_internal],
+            }) if build == "userdebug" else [])
+              + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_user_internal],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_user_internal],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_user_internal],
+            }) if build == "user" else []),
             kernel_build = ":mgk.{}".format(build),
         )
         if build == "ack":
@@ -334,6 +359,21 @@ def define_mgk(
                 "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_customer],
                 "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_customer],
             }) + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_eng_customer],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_eng_customer],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_eng_customer],
+            }) if build == "eng" else [])
+              + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_userdebug_customer],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_userdebug_customer],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_userdebug_customer],
+            }) if build == "userdebug" else [])
+              + (select({
+                "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_user_customer],
+                "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_user_customer],
+                "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_user_customer],
+            }) if build == "user" else [])
+              + (select({
                 "@mgk_ko//:msync2_lic_6.1_set": ["//vendor/mediatek/kernel_modules/msync2_frd_cus/build:msync2_frd_cus.{}.{}".format("6.1", build)],
                 "@mgk_ko//:msync2_lic_mainline_set": ["//vendor/mediatek/kernel_modules/msync2_frd_cus/build:msync2_frd_cus.{}.{}".format("mainline", build)],
                 "//conditions:default": [],
