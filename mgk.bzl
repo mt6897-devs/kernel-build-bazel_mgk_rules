@@ -109,13 +109,17 @@ def define_mgk(
             kleaf_switch[k] = m
     kleaf_internal = []
     kleaf_customer = []
+    kleaf_msync2_customer = 0
     for m in kleaf_modules:
         p = m.partition(":")[2]
         is_cus = 0
         if p in kleaf_switch:
             is_cus = -1
         else:
-            if m.startswith("//vendor/mediatek/kernel_modules/cpufreq_"):
+            if m.startswith("//vendor/mediatek/kernel_modules/msync2_frd_cus"):
+                kleaf_msync2_customer = 1
+                continue
+            elif m.startswith("//vendor/mediatek/kernel_modules/cpufreq_"):
                 is_cus = -1
             elif p.endswith("_cus"):
                 is_cus = 1
@@ -329,7 +333,11 @@ def define_mgk(
                 "//build/bazel_mgk_rules:kernel_version_6.1"     : ["{}.{}.{}".format(m, "6.1", build) for m in kleaf_customer],
                 "//build/bazel_mgk_rules:kernel_version_mainline": ["{}.{}.{}".format(m, "mainline", build) for m in kleaf_customer],
                 "//conditions:default"                           : ["{}.{}".format(m, build) for m in kleaf_customer],
-            }),
+            }) + (select({
+                "@mgk_ko//:msync2_lic_6.1_set": ["//vendor/mediatek/kernel_modules/msync2_frd_cus/build:msync2_frd_cus.{}.{}".format("6.1", build)],
+                "@mgk_ko//:msync2_lic_mainline_set": ["//vendor/mediatek/kernel_modules/msync2_frd_cus/build:msync2_frd_cus.{}.{}".format("mainline", build)],
+                "//conditions:default": [],
+            }) if kleaf_msync2_customer == 1 else []),
             kernel_build = ":mgk.{}".format(build),
         )
         if build == "ack":
