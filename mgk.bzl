@@ -96,7 +96,8 @@ def define_mgk(
         device_userdebug_modules,
         platform_device_userdebug_modules,
         device_user_modules,
-        platform_device_user_modules):
+        platform_device_user_modules,
+        symbol_list):
     mgk_defconfig_overlays = \
         select({"//build/bazel_mgk_rules:entry_level_set": ["entry_level.config"],
                 "//conditions:default": []}) + \
@@ -273,14 +274,10 @@ def define_mgk(
                 module_signing_key = "certs/mtk_signing_key.pem",
                 modules_prepare_force_generate_headers = True,
                 # ABI
-                #kmi_symbol_list = "android/abi_gki_aarch64_mtk",
-                #additional_kmi_symbol_lists = native.glob(
-                #    ["android/abi_gki_aarch64*"],
-                #    exclude = ["**/*.xml", "**/*.stg", "android/abi_gki_aarch64_mtk"],
-                #),
-                #trim_nonlisted_kmi = False,
-                #kmi_symbol_list_strict_mode = False,
-                #collect_unstripped_modules = True,
+                kmi_symbol_list = symbol_list,
+                trim_nonlisted_kmi = False,
+                kmi_symbol_list_strict_mode = False,
+                collect_unstripped_modules = True,
             )
         kernel_abi(
             name = "mgk.{}_abi".format(build),
@@ -296,6 +293,7 @@ def define_mgk(
             abi_definition_stg = "android/abi_gki_aarch64.stg",
             kmi_symbol_list_add_only = True,
             kmi_enforced = True,
+            module_grouping = False,
         )
         # internal
         kernel_modules_install(
