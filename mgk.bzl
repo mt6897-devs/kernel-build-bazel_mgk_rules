@@ -497,7 +497,7 @@ DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
         content.append("MAKE_GOALS=\"modules\"")
         content.append("FILES=\"\"")
     else:
-        content.append("MAKE_GOALS=\"${MAKE_GOALS} Image.lz4 Image.gz\"")
+        content.append("MAKE_GOALS=\"PAHOLE_FLAGS=\"--btf_gen_floats\" ${MAKE_GOALS} Image.lz4 Image.gz\"")
         content.append("FILES=\"${FILES} arch/arm64/boot/Image.lz4 arch/arm64/boot/Image.gz\"")
 
     content.append("")
