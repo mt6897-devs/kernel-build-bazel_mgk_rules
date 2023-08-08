@@ -4,7 +4,7 @@ load(
 )
 load(
     ":mgk.bzl",
-    "kernel_versions",
+    "kernel_versions_and_projects",
 )
 
 def define_mgk_ko(
@@ -27,15 +27,16 @@ def define_mgk_ko(
         )
     if outs == None:
         outs = [name + ".ko"]
-    for version in kernel_versions:
-        for build in ["eng", "userdebug", "user", "ack"]:
-            kernel_module(
-                name = "{}.{}.{}".format(name, version, build),
-                srcs = srcs,
-                outs = outs,
-                kernel_build = "//kernel_device_modules-{}:mgk.{}".format(version, build),
-                deps = [
-                    "//kernel_device_modules-{}:mgk_modules.{}".format(version, build),
-                ] + ["{}.{}.{}".format(m, version, build) for m in deps],
-            )
+    for version,projects in kernel_versions_and_projects.items():
+        for project in projects.split(" "):
+            for build in ["eng", "userdebug", "user", "ack"]:
+                kernel_module(
+                    name = "{}.{}.{}.{}".format(name, project, version, build),
+                    srcs = srcs,
+                    outs = outs,
+                    kernel_build = "//kernel_device_modules-{}:{}.{}".format(version, project, build),
+                    deps = [
+                        "//kernel_device_modules-{}:{}_modules.{}".format(version, project, build),
+                    ] + ["{}.{}.{}.{}".format(m, project, version, build) for m in deps],
+                )
 
