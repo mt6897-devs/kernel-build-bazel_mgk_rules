@@ -16,6 +16,9 @@ load(
     "//build/bazel_common_rules/dist:dist.bzl",
     "copy_to_dist_dir",
 )
+load("@mgk_info//:dict.bzl",
+    "DEFCONFIG_OVERLAYS",
+)
 
 kernel_versions_and_projects = {
    "6.1": "mgk_64_k61 mgk_64_aging_k61 mgk_64_entry_level_k61 mgk_64_fpga_k61 mgk_64_k61_thinmodem mgk_64_k61_wifi mgk_64_kasan_k61 mgk_64_khwasan_k61 mgk_64_pkvm_k61 mgk_64_vulscan_k61",
@@ -99,25 +102,10 @@ def define_mgk(
         device_user_modules,
         platform_device_user_modules,
         symbol_list):
-    mgk_defconfig_overlays = \
-        select({"//build/bazel_mgk_rules:entry_level_set": ["entry_level.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:fpga_set": ["fpga.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:kasan_set": ["kasan.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:khwasan_set": ["khwasan.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:vulscan_set": ["vulscan.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:aging_set": ["aging.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:thinmodem_set": ["thinmodem.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:wifionly_set": ["wifionly.config"],
-                "//conditions:default": []}) + \
-        select({"//build/bazel_mgk_rules:pkvm_set": ["pkvm.config"],
-                "//conditions:default": []})
+    mgk_defconfig_overlays = []
+    for o in DEFCONFIG_OVERLAYS.split(" "):
+        if o != "":
+            mgk_defconfig_overlays.append(o)
 
     mgk_defconfig = defconfig
 

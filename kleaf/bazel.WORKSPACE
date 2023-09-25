@@ -14,7 +14,13 @@
 
 load("//build/kernel/kleaf:workspace.bzl", "define_kleaf_workspace")
 
-define_kleaf_workspace(common_kernel_package = "kernel-6.1")
+load("//build/bazel_mgk_rules:kleaf/key_value_repo.bzl", "key_value_repo")
+key_value_repo(
+    name = "mgk_info",
+)
+
+load("@mgk_info//:dict.bzl","KERNEL_VERSION")
+define_kleaf_workspace(common_kernel_package = "@//"+KERNEL_VERSION)
 
 # Optional epilog for analysis testing.
 load("//build/kernel/kleaf:workspace_epilog.bzl", "define_kleaf_workspace_epilog")
