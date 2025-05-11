@@ -28,12 +28,12 @@ define_kleaf_workspace_epilog()
 
 new_local_repository(
     name="mgk_internal",
-    path="../vendor/mediatek",
+    path="vendor/mediatek",
     build_file = "//build/bazel_mgk_rules:kleaf/BUILD.internal"
 )
 
 new_local_repository(
     name="mgk_ko",
-    path="../vendor/mediatek/kernel_modules",
+    path="vendor/mediatek/kernel_modules",
     build_file = "//build/bazel_mgk_rules:kleaf/BUILD.ko"
 )
