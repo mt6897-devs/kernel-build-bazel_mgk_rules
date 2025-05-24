@@ -101,7 +101,8 @@ def define_mgk(
         platform_device_userdebug_modules,
         device_user_modules,
         platform_device_user_modules,
-        symbol_list):
+        symbol_list,
+        dtb_files = None):
     mgk_defconfig_overlays = []
     for o in DEFCONFIG_OVERLAYS.split(" "):
         if o != "":
@@ -255,7 +256,7 @@ def define_mgk(
                 ],
                 outs = [
                     ".config",
-                ],
+                ] + dtb_files,
                 module_outs = common_eng_modules if build == "eng" else common_userdebug_modules if build == "userdebug" else common_user_modules,
                 build_config = ":{}_build_config.{}".format(name, build),
                 kconfig_ext = "Kconfig.ext",
@@ -263,6 +264,7 @@ def define_mgk(
                 base_kernel = ":{}_kernel_aarch64.{}".format(name, build),
                 module_signing_key = "certs/mtk_signing_key.pem",
                 modules_prepare_force_generate_headers = True,
+                dtstree = "//kernel_device_modules-6.1/arch/arm64/boot/dts:mtk_dt",
                 # ABI
                 kmi_symbol_list = symbol_list,
                 trim_nonlisted_kmi = False,
@@ -484,10 +486,10 @@ DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
     content.append("")
 
     if ctx.attr.gki_mixed_build:
-        content.append("MAKE_GOALS=\"modules\"")
+        content.append("MAKE_GOALS=\"modules dtbs\"")
         content.append("FILES=\"\"")
     else:
-        content.append("MAKE_GOALS=\"PAHOLE_FLAGS=\"--btf_gen_floats\" ${MAKE_GOALS} Image.lz4 Image.gz\"")
+        content.append("MAKE_GOALS=\"PAHOLE_FLAGS=\"--btf_gen_floats\" ${MAKE_GOALS} Image.lz4 Image.gz dtbs\"")
         content.append("FILES=\"${FILES} arch/arm64/boot/Image.lz4 arch/arm64/boot/Image.gz\"")
 
     content.append("")
