@@ -21,7 +21,7 @@ load("@mgk_info//:dict.bzl",
 )
 
 kernel_versions_and_projects = {
-   "6.1": "mgk_64_k61 mgk_64_aging_k61 mgk_64_entry_level_k61 mgk_64_fpga_k61 mgk_64_k61_thinmodem mgk_64_k61_wifi mgk_64_kasan_k61 mgk_64_khwasan_k61 mgk_64_pkvm_k61 mgk_64_vulscan_k61",
+   "6.1": "mgk_64_k61",
 }
 
 def get_real_modules_list(common_modules, platform_modules):
