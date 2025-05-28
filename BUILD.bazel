@@ -14,6 +14,7 @@ load(
 
 string_flag(name = "kernel_version" , build_setting_default = "6.1")
 config_setting(name = "kernel_version_6.1"     , flag_values = {":kernel_version": "6.1"})
+config_setting(name = "kernel_version_6.6"     , flag_values = {":kernel_version": "6.6"})
 config_setting(name = "kernel_version_mainline", flag_values = {":kernel_version": "mainline"})
 
 bool_flag(name = "internal_config", build_setting_default = False)

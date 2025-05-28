@@ -13,6 +13,10 @@ selects.config_setting_group(
     match_all = [":msync2_lic_set", "@//build/bazel_mgk_rules:kernel_version_6.1"]
 )
 selects.config_setting_group(
+    name = "msync2_lic_6.6_set",
+    match_all = [":msync2_lic_set", "@//build/bazel_mgk_rules:kernel_version_6.6"]
+)
+selects.config_setting_group(
     name = "msync2_lic_mainline_set",
     match_all = [":msync2_lic_set", "@//build/bazel_mgk_rules:kernel_version_mainline"]
 )
