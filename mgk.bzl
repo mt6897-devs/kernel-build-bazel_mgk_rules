@@ -238,6 +238,12 @@ def define_mgk(
         else:
             kernel_build(
                 name = "{}_kernel_aarch64.{}".format(name, build),
+                makefile = select({
+                    "//build/bazel_mgk_rules:kernel_version_6.1"     : "//kernel-{}:Makefile".format("6.1"),
+                    "//build/bazel_mgk_rules:kernel_version_6.6"     : "//kernel-{}:Makefile".format("6.6"),
+                    "//build/bazel_mgk_rules:kernel_version_mainline": "//kernel-{}:Makefile".format("mainline"),
+                    "//conditions:default"                           : "//kernel:Makefile",
+                }),
                 srcs = select({
                     "//build/bazel_mgk_rules:kernel_version_6.1"     : ["//kernel-{}:kernel_aarch64_sources".format("6.1")],
                     "//build/bazel_mgk_rules:kernel_version_6.6"     : ["//kernel-{}:kernel_aarch64_sources".format("6.6")],
@@ -258,6 +264,12 @@ def define_mgk(
             )
             kernel_build(
                 name = "{}.{}".format(name, build),
+                makefile = select({
+                    "//build/bazel_mgk_rules:kernel_version_6.1"     : "//kernel-{}:Makefile".format("6.1"),
+                    "//build/bazel_mgk_rules:kernel_version_6.6"     : "//kernel-{}:Makefile".format("6.6"),
+                    "//build/bazel_mgk_rules:kernel_version_mainline": "//kernel-{}:Makefile".format("mainline"),
+                    "//conditions:default"                           : "//kernel:Makefile",
+                }),
                 srcs = select({
                     "//build/bazel_mgk_rules:kernel_version_6.1"     : ["//kernel-{}:kernel_aarch64_sources".format("6.1")],
                     "//build/bazel_mgk_rules:kernel_version_6.6"     : ["//kernel-{}:kernel_aarch64_sources".format("6.6")],
@@ -485,12 +497,10 @@ fi""")
         ext_content.append("EXT_MODULES+=\" vendor/mediatek/kernel_modules/met_drv_v3/met_api\"")
     content = []
     content.append("DEVICE_MODULES_DIR={}".format(ctx.attr.device_modules_dir))
-    content.append("KERNEL_DIR={}".format(ctx.attr.kernel_dir))
     content.append("DEVICE_MODULES_REL_DIR=$(realpath ${DEVICE_MODULES_DIR} --relative-to ${KERNEL_DIR})")
     content.append("""
-. ${ROOT_DIR}/${KERNEL_DIR}/build.config.common
-. ${ROOT_DIR}/${KERNEL_DIR}/build.config.gki
-. ${ROOT_DIR}/${KERNEL_DIR}/build.config.aarch64
+. ${ROOT_DIR}/${KERNEL_DIR}/build.config.constants
+KCFLAGS="${KCFLAGS} -D__ANDROID_COMMON_KERNEL__"
 
 DEVICE_MODULES_PATH="\\$(srctree)/\\$(DEVICE_MODULES_REL_DIR)"
 DEVCIE_MODULES_INCLUDE="-I\\$(DEVICE_MODULES_PATH)/include"
