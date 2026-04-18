@@ -19,6 +19,7 @@ load(
 load("@mgk_info//:dict.bzl",
     "DEFCONFIG_OVERLAYS",
 )
+load(":merged_uapi_headers.bzl", "merged_uapi_headers")
 
 kernel_versions_and_projects = {
    "6.1": "mgk_64_k61",
@@ -334,6 +335,15 @@ def define_mgk(
             }) if build == "user" else []),
             kernel_build = ":{}.{}".format(name, build),
         )
+
+        merged_uapi_headers(
+            name = "{}_merged_uapi_headers.{}".format(name, build),
+            uapi_headers = [
+                ":{}_kernel_aarch64.{}_uapi_headers".format(name, build),
+                "//kernel_device_modules-6.1:mtk_uapi_tarball",
+            ],
+        )
+
         if build == "ack":
             copy_to_dist_dir(
                 name = "{}_internal_dist.{}".format(name, build),
@@ -345,6 +355,7 @@ def define_mgk(
                 }) + [
                     ":{}.{}".format(name, build),
                     ":{}_internal_modules_install.{}".format(name, build),
+                    ":{}_merged_uapi_headers.{}".format(name, build),
                 ],
                 flat = False,
             )
@@ -359,6 +370,7 @@ def define_mgk(
                 }) + [
                     ":{}.{}".format(name, build),
                     ":{}_internal_modules_install.{}".format(name, build),
+                    ":{}_merged_uapi_headers.{}".format(name, build),
                 ],
                 flat = False,
             )
@@ -410,6 +422,7 @@ def define_mgk(
                 }) + [
                     ":{}.{}".format(name, build),
                     ":{}_customer_modules_install.{}".format(name, build),
+                    ":{}_merged_uapi_headers.{}".format(name, build),
                 ],
                 flat = False,
             )
@@ -424,6 +437,7 @@ def define_mgk(
                 }) + [
                     ":{}.{}".format(name, build),
                     ":{}_customer_modules_install.{}".format(name, build),
+                    ":{}_merged_uapi_headers.{}".format(name, build),
                 ],
                 flat = False,
             )
